@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------------------
 # S3 BUCKET: Raw Data Layer
 # -----------------------------------------------------------------------------
-# This bucket stores raw CSV files from the solar monitoring system
+# This bucket stores raw git initCSV files from the solar monitoring system
 # Data will be organized by: raw/year=YYYY/month=MM/
 
 resource "aws_s3_bucket" "solar_raw" {
@@ -40,4 +40,37 @@ resource "aws_s3_bucket_public_access_block" "solar_raw_public_access" {
   block_public_policy     = true
   ignore_public_acls      = true
   restrict_public_buckets = true
+}
+
+# -----------------------------------------------------------------------------
+# S3 FOLDER STRUCTURE
+# -----------------------------------------------------------------------------
+# S3 doesn't have real folders — these are "prefix" markers
+
+# Raw layer
+resource "aws_s3_object" "raw_monthly" {
+  bucket = aws_s3_bucket.solar_raw.id
+  key    = "raw/monthly/"
+}
+
+resource "aws_s3_object" "raw_auxiliary_csv" {
+  bucket = aws_s3_bucket.solar_raw.id
+  key    = "raw/auxiliary/csv/"
+}
+
+resource "aws_s3_object" "raw_auxiliary_xlsx" {
+  bucket = aws_s3_bucket.solar_raw.id
+  key    = "raw/auxiliary/xlsx/"
+}
+
+# Staging layer
+resource "aws_s3_object" "staging_monthly" {
+  bucket = aws_s3_bucket.solar_raw.id
+  key    = "staging/monthly/"
+}
+
+# Curated layer
+resource "aws_s3_object" "curated_pr" {
+  bucket = aws_s3_bucket.solar_raw.id
+  key    = "curated/performance_ratio/"
 }
