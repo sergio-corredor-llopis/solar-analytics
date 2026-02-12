@@ -67,3 +67,28 @@ solar-analytics-raw-scl-dev/
 cd terraform
 terraform init
 terraform apply
+
+## Data Pipeline
+
+### Source Data
+- 131 monthly CSV files (Feb 2013 → Dec 2023)
+- Format: UTF-16 LE, tab-separated, European decimals
+- Pattern: `YYYY MM [Spanish Month] Todos los Inversores.csv`
+
+### Conversion Script
+
+```bash
+# Install dependencies
+pip install pandas pyarrow
+
+# Convert one file
+python src/data_conversion.py
+
+### Output Structure
+data/staging/monthly/
+└── year=2013/
+└── month=02/
+└── solar_data_2013_02.parquet
+
+### Data Documentation
+See [docs/data_dictionary.md](docs/data_dictionary.md) for column descriptions.
