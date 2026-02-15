@@ -34,5 +34,50 @@
 
 ## Processing Notes
 - 107 columns total (not all used)
-- 15-minute intervals
 - Multiple inverters (identified by ID in parentheses)
+- First 5 files (~Feb 2013 - Jun 2013?): 15-minute intervals, ~4 MB each
+- Remaining 126 files: 5-minute intervals, ~10 MB each
+- Total estimated size: (5 × 4MB) + (126 × 10MB) ≈ 1.28 GB of CSVs
+
+## Measurement Intervals
+|
+ Period 
+|
+ Interval 
+|
+ Approx Rows/Month 
+|
+ File Size 
+|
+|
+--------
+|
+----------
+|
+--------------------
+|
+-----------
+|
+|
+ Feb 2013 - Jun 2013 (first 5 files) 
+|
+ 15 minutes 
+|
+ ~2,800 
+|
+ ~4 MB 
+|
+|
+ Jul 2013 - Dec 2023 (remaining 126 files) 
+|
+ 5 minutes 
+|
+ ~8,600 
+|
+ ~10 MB 
+|
+
+## Conversion Results
+- Total files converted: 131/131
+- Total rows: [1,098,114]
+- No anomalies

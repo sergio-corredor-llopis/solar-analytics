@@ -209,7 +209,7 @@ if __name__ == "__main__":
     
     print("\n=== STEP 3: CONVERT ALL FILES ===\n")
     # Uncomment when ready (after testing with one file):
-    # convert_all_files(SOURCE_DIR, OUTPUT_DIR)
+    convert_all_files(SOURCE_DIR, OUTPUT_DIR)
     
     print("\n⚠️  Update the paths above and uncomment the function calls!")
 
