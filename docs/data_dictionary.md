@@ -32,6 +32,20 @@
 | T_WR | Inverter temperature | T_WR(1(47596)) |
 | E_Total | Total Energy (per inverter) | E_Total(1(47596)) |
 
+## Column Summary
+- Total columns: 108 (verified across all 131 files)
+- Fecha (date) + Hora (time) = 2 identifier columns
+- 106 measurement columns across categories:
+  - G_H, G_M: Irradiance
+  - T_U, T_M: Temperature
+  - I_DC, U_DC: DC current/voltage (per inverter)
+  - I_AC, U_AC: AC current/voltage (per inverter)
+  - P_AC: AC power (per inverter)
+  - T_WR: Inverter temperature
+  - E_Total: Cumulative energy (per inverter)
+  - F_L0: [check what this is — possibly frequency?]
+  - VFG: [check what this is]
+
 ## Processing Notes
 - 107 columns total (not all used)
 - Multiple inverters (identified by ID in parentheses)
@@ -45,39 +59,83 @@
 |
  Interval 
 |
- Approx Rows/Month 
-|
- File Size 
+ Source 
 |
 |
 --------
 |
 ----------
 |
---------------------
-|
------------
+--------
 |
 |
- Feb 2013 - Jun 2013 (first 5 files) 
+ 01/01/2013 00:00:00 → 02/07/2013 21:44:59 
 |
  15 minutes 
 |
- ~2,800 
-|
- ~4 MB 
+ Auxiliary file 
 |
 |
- Jul 2013 - Dec 2023 (remaining 126 files) 
+ 02/07/2013 21:45:00 → 31/12/2023 
 |
  5 minutes 
 |
- ~8,600 
+ Auxiliary file 
 |
- ~10 MB 
-|
+
+⚠️ IMPORTANT: The transition happens MID-FILE in July 2013.
+The July 2013 CSV contains BOTH 15-min and 5-min intervals.
 
 ## Conversion Results
 - Total files converted: 131/131
 - Total rows: [1,098,114]
 - No anomalies
+
+## Unused/Unknown Columns
+|
+ Column 
+|
+ Units Row 
+|
+ Data Present 
+|
+ Used in Analysis 
+|
+ Notes 
+|
+|
+--------
+|
+-----------
+|
+-------------
+|
+-----------------
+|
+-------
+|
+|
+ VFG    
+|
+ Verfügbarkeit (Availability)
+|
+ ❌ Empty in all files
+|
+ ❌ No
+|
+|
+ F_L0   
+|
+ Likely line frequency
+|
+ ✅ Has data 
+|
+ ❌ No 
+|
+ Unknown parameter, not used in original UPM analysis 
+|
+
+## Notes
+- "valor medio" = mean value (Spanish)
+- Both columns preserved in Parquet for completeness
+- Can be dropped in the dbt staging layer (Week 9-10)
