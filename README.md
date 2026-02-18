@@ -92,3 +92,57 @@ data/staging/monthly/
 
 ### Data Documentation
 See [docs/data_dictionary.md](docs/data_dictionary.md) for column descriptions.
+
+## Architecture
+
+### Pipeline Overview
+CSV (raw) → Parquet → Validation → S3 Upload → S3 Verification
+
+### Local Development
+
+The pipeline runs on Apache Airflow, containerized with Docker:
+
+| Service | Purpose |
+|---------|---------|
+| PostgreSQL | Metadata database |
+| Airflow Webserver | UI (localhost:8080) |
+| Airflow Scheduler | Task orchestration |
+
+### Setup
+
+```bash
+cd airflow
+docker compose up airflow-init   # First time only
+docker compose up -d             # Start services
+Access the UI at http://localhost:8080 (admin/admin)
+
+Pipeline DAG: solar_pipeline
+Task	Description
+convert_csv_to_parquet	Convert 131 monthly CSVs to Parquet format
+verify_conversion	Validate file count, columns, format, year range
+upload_to_s3	Upload to s3://solar-analytics-raw-scl-dev/
+verify_s3_upload	Validate upload count, bucket, region
+Tasks communicate via XCom. If any validation fails, downstream tasks are blocked.
+
+## Project Structure
+solar-analytics/
+├── terraform/
+│ ├── provider.tf
+│ ├── variables.tf
+│ ├── main.tf
+│ ├── outputs.tf
+│ └── iam.tf
+├── src/
+│ ├── data_conversion.py
+│ ├── verify_conversion.py
+│ ├── upload_to_s3.py
+│ └── verify_s3_upload.py
+├── airflow/
+│ ├── docker-compose.yaml
+│ └── dags/
+│ └── solar_pipeline_dag.py
+├── docs/
+│ └── data_dictionary.md
+├── requirements.txt
+├── README.md
+└── .gitignore
