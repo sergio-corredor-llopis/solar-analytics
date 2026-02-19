@@ -3,6 +3,9 @@ from airflow.operators.python import PythonOperator
 from airflow.operators.bash import BashOperator
 from datetime import datetime, timedelta
 import json
+import sys
+sys.path.insert(0, '/opt/airflow/src')
+from validate_parquet import validate_parquet_quality
 
 default_args = {
     "owner": "sergio",
@@ -144,6 +147,12 @@ with DAG(
         python_callable=verify_conversion,
     )
 
+    task_validate = PythonOperator(
+        task_id="validate_quality",
+        python_callable=validate_parquet_quality,
+        op_kwargs={"input_dir": "/opt/airflow/data/staging/monthly"},
+    )
+
     task_upload = PythonOperator(
         task_id="upload_to_s3",
         python_callable=upload_to_s3,
@@ -154,4 +163,4 @@ with DAG(
         python_callable=verify_s3_upload,
     )
 
-    task_convert >> task_verify >> task_upload >> task_verify_s3
+    task_convert >> task_verify >> task_validate >> task_upload >> task_verify_s3

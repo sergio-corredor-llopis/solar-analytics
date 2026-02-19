@@ -15,4 +15,6 @@ Thumbs.db
 # Airflow
 airflow/logs/
 airflow/plugins/
-airflow/dags/__pycache__/
+
+# General
+__pycache__/
