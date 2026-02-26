@@ -1,0 +1,18 @@
+version: 2
+
+models:
+  - name: stg_solar_readings
+    description: "Staging model for raw solar readings from Meteocontrol"
+    columns:
+      - name: timestamp_raw
+        description: "Raw timestamp as INT64 — to be cast in later iteration"
+        tests:
+          - not_null
+      - name: fecha_raw
+        description: "Raw date string"
+        tests:
+          - not_null
+      - name: hora_raw
+        description: "Raw time string"
+        tests:
+          - not_null

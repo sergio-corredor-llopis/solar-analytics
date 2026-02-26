@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: solar_raw
+    database: dbt-tutorial-488323
+    schema: solar_raw
+    tables:
+      - name: raw_solar_readings
