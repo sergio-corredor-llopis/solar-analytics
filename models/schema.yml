@@ -2,17 +2,21 @@ version: 2
 
 models:
   - name: stg_solar_readings
-    description: "Staging model for raw solar readings from Meteocontrol"
+    description: "Cleaned and renamed solar readings from Meteocontrol. One row per 5/15-min interval."
     columns:
-      - name: timestamp_raw
-        description: "Raw timestamp as INT64 — to be cast in later iteration"
+      - name: reading_at
+        description: "Interval timestamp, cast from INT64 nanoseconds to TIMESTAMP"
         tests:
           - not_null
-      - name: fecha_raw
-        description: "Raw date string"
+      - name: year
+        description: "Partition year"
         tests:
           - not_null
-      - name: hora_raw
-        description: "Raw time string"
+      - name: month
+        description: "Partition month"
+        tests:
+          - not_null
+      - name: source_file
+        description: "Source CSV filename for lineage tracing"
         tests:
           - not_null

@@ -1,0 +1,14 @@
+system_id,inclination_deg,has_pyranometer,has_temp_sensor,tnoc_celsius,area_m2,power_wp,gamma_pct,module_efficiency,eta_a_g_200,col_irr_cell,col_irr_pyranometer,col_temp_module,col_temp_ambient,col_idc,col_vdc,col_pac
+1,10,false,false,45,6.5,1260,-0.38,0.193,0.17005,g_m3,,,,i_dc_1,u_dc_1,p_ac_1
+2,30,true,true,45,8.2,1100,-0.45,0.135,0.12034,g_m1,g_h1,t_module_2,t_ambient,i_dc_2,u_dc_2,p_ac_2
+3,30,true,true,45,6.5,1332,-0.38,0.204,0.17841,g_m1,g_h1,t_module_6,t_ambient,i_dc_3,u_dc_3,p_ac_3
+4,10,false,false,45,6.5,1200,-0.38,0.184,0.16678,g_m3,,,,i_dc_4,u_dc_4,p_ac_4
+5,10,false,false,46,6.2,1075,-0.38,0.173,0.16302,g_m3,,,,i_dc_5,u_dc_5,p_ac_5
+6,10,false,false,45,6.5,1260,-0.38,0.193,0.17199,g_m3,,,,i_dc_6,u_dc_6,p_ac_6
+7,10,false,false,46,6.2,1050,-0.38,0.169,0.15934,g_m3,,,,i_dc_7,u_dc_7,p_ac_7
+8,30,true,true,47,11.7,1200,-0.36,0.10,0.08458,g_m1,g_h1,t_module_5,t_ambient,i_dc_8,u_dc_8,p_ac_8
+9,30,true,true,45,7.2,775,-0.25,0.11,0.08162,g_m1,g_h1,t_module_4,t_ambient,i_dc_9,u_dc_9,p_ac_9
+10,30,true,true,44,14.2,1150,-0.24,0.081,0.06322,g_m1,g_h1,t_module_3,t_ambient,i_dc_10,u_dc_10,p_ac_10
+11,30,true,true,43.7,8.0,1250,-0.469,0.155,0.12890,g_m1,g_h1,t_module_1,t_ambient,i_dc_11,u_dc_11,p_ac_11
+12,30,true,false,45,25.3,3120,-0.46,0.123,0.09940,g_m1,g_h1,,t_ambient,i_dc_12,u_dc_12,p_ac_12
+13,5,false,false,45,19.5,3660,-0.38,0.187,0.17778,g_m2,,,t_ambient,i_dc_1_detail,u_dc_1_detail,p_ac_1_detail
