@@ -1,0 +1,36 @@
+models:
+  - name: int_readings_unpivoted
+    description: >
+      Wide-to-long unpivot of stg_solar_readings. One row per (reading_at, system_id).
+      Applies 2017 DST correction (+1hr for CEST period) and joins interval definitions.
+      See dbt_Architecture.md §3.1 for full logic.
+    columns:
+      - name: reading_at
+        description: Corrected local timestamp (2017 CEST period has +1hr applied)
+        tests:
+          - not_null
+      - name: system_id
+        description: University system number (1-13)
+        tests:
+          - not_null
+          - accepted_values:
+              values: [1,2,3,4,5,6,7,8,9,10,11,12,13]
+              quote: false
+      - name: inclination_deg
+        description: Panel inclination in degrees (5, 10, or 30)
+        tests:
+          - not_null
+          - accepted_values:
+              values: [5,10,30]
+              quote: false
+      - name: interval_seconds
+        description: Measurement interval (900 for 15-min period, 300 for 5-min period)
+        tests:
+          - not_null
+          - accepted_values:
+              values: [300,900]
+              quote: false
+      - name: is_dst_corrected
+        description: True for 2017 rows in the CEST period (2017-03-26 02:00 to 2017-10-29 03:00)
+        tests:
+          - not_null

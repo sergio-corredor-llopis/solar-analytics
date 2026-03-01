@@ -11,4 +11,4 @@ system_id,inclination_deg,has_pyranometer,has_temp_sensor,tnoc_celsius,area_m2,p
 10,30,true,true,44,14.2,1150,-0.24,0.081,0.06322,g_m1,g_h1,t_module_3,t_ambient,i_dc_10,u_dc_10,p_ac_10
 11,30,true,true,43.7,8.0,1250,-0.469,0.155,0.12890,g_m1,g_h1,t_module_1,t_ambient,i_dc_11,u_dc_11,p_ac_11
 12,30,true,false,45,25.3,3120,-0.46,0.123,0.09940,g_m1,g_h1,,t_ambient,i_dc_12,u_dc_12,p_ac_12
-13,5,false,false,45,19.5,3660,-0.38,0.187,0.17778,g_m2,,,t_ambient,i_dc_1_detail,u_dc_1_detail,p_ac_1_detail
+13,5,false,false,45,19.5,3660,-0.38,0.187,0.17778,g_m2,,,t_ambient,i_dc_13,u_dc_13,p_ac_13
