@@ -1,8 +1,9 @@
 {{
     config(
-        materialized='table'
+        materialized='view'
     )
 }}
+
 
 WITH source AS (
     SELECT * FROM {{ ref('stg_solar_readings') }}

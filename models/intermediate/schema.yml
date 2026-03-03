@@ -34,3 +34,141 @@ models:
         description: True for 2017 rows in the CEST period (2017-03-26 02:00 to 2017-10-29 03:00)
         tests:
           - not_null
+  - name: int_readings_cleaned
+    description: >
+      Manual QA overrides and per-system range bounds applied. No rows dropped —
+      bad values are nullified and flagged for downstream routing.
+    columns:
+      - name: reading_at
+        tests: [not_null]
+      - name: system_id
+        tests: [not_null]
+      - name: is_irr_reconstruct_needed
+        tests:
+          - not_null
+          - accepted_values:
+              values: [true, false]
+              quote: false
+      - name: is_ambient_nullified
+        tests:
+          - not_null
+          - accepted_values:
+              values: [true, false]
+              quote: false
+  - name: int_irr_30deg_reconstructed
+    description: >
+      Pyranometer-based irr_cell reconstruction for dead cell-30 sensor periods.
+      Narrow output (reading_at, system_id, irr_cell_reconstructed, irr_data_type)
+      joined back by int_readings_merged.
+    columns:
+      - name: reading_at
+        tests: [not_null]
+      - name: system_id
+        tests: [not_null]
+      - name: irr_cell_reconstructed
+        tests: [not_null]
+  - name: int_irr_donor_substituted
+    description: >
+      Donor-day irr_cell substitution for 5° and 10° dead cell sensor periods.
+      Returns zero rows until seed_irr_donor_days is populated in Phase 5.
+    columns:
+      - name: reading_at
+        tests: [not_null]
+      - name: system_id
+        tests: [not_null]
+  - name: int_readings_merged
+    description: >
+      Main data flow after irradiance reconstruction. irr_cell is COALESCE of
+      original, regression, and donor sources. irr_data_type tracks provenance.
+    columns:
+      - name: reading_at
+        tests: [not_null]
+      - name: system_id
+        tests: [not_null]
+  - name: int_ambient_temp_derived
+    description: >
+      Reverse-TNOC ambient temperature derivation for the faulty sensor period
+      (Feb 2013 - Mar 29 2016). Narrow output joined by int_readings_daytime.
+      Only covers daytime timestamps where at least one eligible system has
+      valid temp_module and irr_cell.
+    columns:
+      - name: reading_at
+        tests: [not_null]
+      - name: temp_ambient_derived
+        tests: [not_null]
+      - name: num_systems_used
+        tests: [not_null]
+  - name: int_sun_times
+    description: >
+      Sunrise and sunset per (date, inclination_deg). Method A (irradiance-based)
+      used when >= 50% of expected daytime readings are above 25 W/m².
+      Falls back to astronomical seed otherwise.
+    columns:
+      - name: date
+        tests: [not_null]
+      - name: inclination_deg
+        tests: [not_null]
+      - name: sunrise_at
+        tests: [not_null]
+      - name: sunset_at
+        tests: [not_null]
+      - name: sun_method
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['irradiance_based', 'irradiance_borrowed', 'astronomical']
+  - name: int_readings_daytime
+    description: >
+      Daytime rows only (sunrise to sunset per inclination). Derived ambient
+      temperature merged in for the Feb 2013 - Mar 2016 faulty sensor period.
+    columns:
+      - name: reading_at
+        tests: [not_null]
+      - name: system_id
+        tests: [not_null]
+      - name: temp_ambient_source
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['measured', 'derived_reverse_tnoc']
+  - name: int_readings_interpolated
+    description: >
+      Linear gap-fill for gaps <= 1 hour. Larger gaps remain NULL.
+      Applies to irr_cell, irr_pyranometer, temp_module, temp_ambient,
+      idc_a, vdc_v, pac_w.
+    columns:
+      - name: reading_at
+        tests: [not_null]
+      - name: system_id
+        tests: [not_null]
+  - name: int_readings_temp_estimated
+    description: >
+      TNOC-based module temperature estimation for systems without sensors
+      or with nullified sensor periods. temp_source tracks provenance.
+    columns:
+      - name: reading_at
+        tests: [not_null]
+      - name: system_id
+        tests: [not_null]
+  - name: int_readings_complete
+    description: >
+      Final pre-calculation table. is_complete flags rows with all metrics
+      needed for PR calculations. is_system_available flags rows where
+      pac_w > 0. All mart models filter to is_complete = TRUE.
+    columns:
+      - name: reading_at
+        tests: [not_null]
+      - name: system_id
+        tests: [not_null]
+      - name: is_complete
+        tests:
+          - not_null
+          - accepted_values:
+              values: [true, false]
+              quote: false
+      - name: is_system_available
+        tests:
+          - not_null
+          - accepted_values:
+              values: [true, false]
+              quote: false

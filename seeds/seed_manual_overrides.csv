@@ -65,3 +65,7 @@ start_at,end_at,metric,system_id,reason,override_type
 2021-08-01 00:00:00,2023-12-31 23:59:59,temp_module,2,sensor_failed_T_M2,nullify
 2015-06-01 00:00:00,2023-12-31 23:59:59,temp_module,10,sensor_unreliable_T_M3,nullify
 2013-02-01 00:00:00,2016-03-29 23:59:59,temp_ambient,all,sensor_offset_plus5_6C,nullify
+2016-03-08 00:00:00,2016-03-17 23:59:59,temp_module,8,sensor_failure_T_M5_mar2016,nullify
+2017-10-23 00:00:00,2018-07-18 23:59:59,irr_cell_30,all,major_logging_blackout_2017_2018,nullify
+2017-10-23 00:00:00,2018-07-18 23:59:59,irr_cell_10,all,major_logging_blackout_2017_2018,nullify
+2017-10-23 00:00:00,2018-07-18 23:59:59,irr_cell_5,all,major_logging_blackout_2017_2018,nullify
