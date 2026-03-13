@@ -69,3 +69,10 @@ start_at,end_at,metric,system_id,reason,override_type
 2017-10-23 00:00:00,2018-07-18 23:59:59,irr_cell_30,all,major_logging_blackout_2017_2018,nullify
 2017-10-23 00:00:00,2018-07-18 23:59:59,irr_cell_10,all,major_logging_blackout_2017_2018,nullify
 2017-10-23 00:00:00,2018-07-18 23:59:59,irr_cell_5,all,major_logging_blackout_2017_2018,nullify
+2016-03-08 00:00:00,2016-03-17 23:59:00,temp_module,8,T_M5 dense failure block all readings strongly negative,nullify
+2016-05-26 00:00:00,2016-05-26 23:59:00,temp_module,8,T_M5 isolated failure day 72 readings negative,nullify
+2016-03-08 00:00:00,2016-03-08 23:59:00,temp_module,3,T_M6 spike 4 readings impossible negative,nullify
+2016-03-17 00:00:00,2016-03-17 23:59:00,temp_module,3,T_M6 spike 4 readings impossible negative,nullify
+2016-03-31 00:00:00,2016-03-31 23:59:00,temp_module,3,T_M6 spike 1 reading impossible negative,nullify
+2022-01-01 00:00:00,2023-12-31 23:59:59,temp_module,8,sensor_degraded_T_M5_chronic,nullify
+2021-10-01 00:00:00,2023-12-31 23:59:59,irr_pyranometer,all,sensor_degraded_g_h1_pyranometer,nullify

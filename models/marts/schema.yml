@@ -1,0 +1,76 @@
+version: 2
+
+models:
+  - name: mart_daily_performance
+    description: "ISO 61724 daily energy metrics per system"
+    columns:
+      - name: system_id
+        tests:
+          - not_null
+      - name: date
+        tests:
+          - not_null
+      - name: h_i_kwh_m2
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: e_ac_kwh
+        tests:
+          - not_null:
+              config:
+                severity: warn
+    tests:
+      - unique:
+          column_name: "CONCAT(CAST(system_id AS STRING), '_', CAST(date AS STRING))"
+      - dbt_utils.expression_is_true:
+          expression: "e_ac_kwh >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "e_dc_kwh >= e_ac_kwh OR e_dc_kwh IS NULL"
+          config:
+            severity: warn
+      - dbt_utils.expression_is_true:
+          expression: "h_i_kwh_m2 >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "pr_pct <= 110 OR pr_pct IS NULL"
+
+  - name: mart_monthly_performance
+    description: "ISO 61724 monthly energy metrics per system"
+    columns:
+      - name: system_id
+        tests:
+          - not_null
+      - name: month
+        tests:
+          - not_null
+    tests:
+      - unique:
+          column_name: "CONCAT(CAST(system_id AS STRING), '_', CAST(month AS STRING))"
+      - dbt_utils.expression_is_true:
+          expression: "e_ac_kwh >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "e_dc_kwh >= e_ac_kwh OR e_dc_kwh IS NULL"
+          config:
+            severity: warn
+      - dbt_utils.expression_is_true:
+          expression: "pr_pct <= 110 OR pr_pct IS NULL"
+      - dbt_utils.expression_is_true:
+          expression: "days_with_data <= days_in_month"
+  - name: mart_annual_performance
+    description: "ISO 61724 annual energy metrics per system"
+    columns:
+      - name: system_id
+        tests:
+          - not_null
+      - name: year
+        tests:
+          - not_null
+    tests:
+      - unique:
+          column_name: "CONCAT(CAST(system_id AS STRING), '_', CAST(year AS STRING))"
+      - dbt_utils.expression_is_true:
+          expression: "e_ac_kwh >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "pr_pct <= 110 OR pr_pct IS NULL"
+          config:
+            severity: warn

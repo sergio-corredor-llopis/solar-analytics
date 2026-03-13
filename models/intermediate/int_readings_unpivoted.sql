@@ -226,7 +226,7 @@ unpivoted AS (
     UNION ALL
 
     -- System 13: 5°, cell=g_m2, no pyranometer, no module temp sensor
-    -- NOTE: uses i_dc_1_detail / u_dc_1_detail / p_ac_1_detail (device 47597)
+    -- NOTE: uses i_dc_13 / u_dc_13 / p_ac_13 (device 47597)
     -- NOT system 1 — see §0d of dbt_Architecture.md
     SELECT
         reading_at        AS reading_at_raw,
@@ -236,9 +236,9 @@ unpivoted AS (
         CAST(NULL AS FLOAT64) AS irr_pyranometer,
         CAST(NULL AS FLOAT64) AS temp_module,
         t_ambient         AS temp_ambient,
-        i_dc_13     AS idc_a,
-        u_dc_13     AS vdc_v,
-        p_ac_13     AS pac_w,
+        i_dc_13           AS idc_a,
+        u_dc_13           AS vdc_v,
+        p_ac_13           AS pac_w,
         source_file
     FROM source
 
@@ -246,9 +246,18 @@ unpivoted AS (
 
 /*
   Step 2 — 2017 DST correction.
-  Meteocontrol did not apply the CET→CEST change in 2017.
+  Meteocontrol did not apply the CET→CEST change in 2017 for most systems.
   Spain CEST: last Sunday of March (2017-03-26) → last Sunday of October (2017-10-29).
-  We add +1 hour to all affected timestamps to get true local solar time.
+  We add +1 hour to correct affected timestamps to true local solar time.
+
+  EXCLUSIONS — systems 3, 8, and 13 are NOT corrected:
+    - System 3  (T_M6): Meteocontrol correctly applied DST for this logger in 2017.
+    - System 8  (T_M5): Same as system 3 — DST already applied by Meteocontrol.
+    - System 13 (5°):   Separate data logger (device 47597) that handled DST itself.
+  Applying the +1 hour shift to these systems would introduce a spurious 1-hour
+  offset in their timestamps relative to all shared sensors (irradiance, ambient),
+  corrupting TNOC calculations and cross-system comparisons.
+
   All other years are correctly handled by Meteocontrol — no correction needed.
 */
 dst_corrected AS (
@@ -257,6 +266,7 @@ dst_corrected AS (
             WHEN EXTRACT(YEAR FROM reading_at_raw) = 2017
                 AND reading_at_raw >= TIMESTAMP('2017-03-26 02:00:00')
                 AND reading_at_raw <  TIMESTAMP('2017-10-29 03:00:00')
+                AND system_id NOT IN (3, 8, 13)
             THEN TIMESTAMP_ADD(reading_at_raw, INTERVAL 1 HOUR)
             ELSE reading_at_raw
         END                                                     AS reading_at,
@@ -274,6 +284,7 @@ dst_corrected AS (
             WHEN EXTRACT(YEAR FROM reading_at_raw) = 2017
                 AND reading_at_raw >= TIMESTAMP('2017-03-26 02:00:00')
                 AND reading_at_raw <  TIMESTAMP('2017-10-29 03:00:00')
+                AND system_id NOT IN (3, 8, 13)
             THEN TRUE
             ELSE FALSE
         END                                                     AS is_dst_corrected,

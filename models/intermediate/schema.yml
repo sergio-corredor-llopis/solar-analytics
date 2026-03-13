@@ -172,3 +172,139 @@ models:
           - accepted_values:
               values: [true, false]
               quote: false
+  - name: int_irr_reliability_flags
+    description: >
+      Phase 5 irradiance reliability QA. FOR VISUAL REVIEW ONLY —
+      does not modify data or auto-populate seed_manual_overrides.
+      Grain: one row per (date, inclination_deg).
+      combined_reliability_score >= 2 = strong candidate for visual review.
+    columns:
+      - name: date
+        description: Calendar date (Spanish local time)
+      - name: inclination_deg
+        description: "Sensor inclination group: 5, 10, or 30 degrees"
+
+      # Test 1 — cell/pyranometer ratio (30° only; NULL for 5° and 10°)
+      - name: n_ratio_readings
+        description: Number of 5-min readings where both irr_cell and irr_pyranometer > 25 W/m²
+      - name: daily_median_ratio
+        description: Median of (irr_cell / irr_pyranometer) for the day
+      - name: rolling_7d_median_ratio
+        description: 7-day rolling median of daily_median_ratio
+      - name: flag_cell_pyr_ratio
+        description: "1 if daily median ratio deviates > 15% from rolling 7-day median. NULL if < 10 qualifying readings."
+
+      # Test 2 — cross-inclination correlation
+      - name: corr_30_10
+        description: Pearson r between 30° and 10° intraday readings for this date
+      - name: corr_30_5
+        description: Pearson r between 30° and 5° intraday readings for this date
+      - name: corr_10_5
+        description: Pearson r between 10° and 5° intraday readings for this date
+      - name: irr_ratio_30_10
+        description: Daily irradiation ratio (30° / 10°)
+      - name: irr_ratio_30_5
+        description: Daily irradiation ratio (30° / 5°)
+      - name: irr_ratio_10_5
+        description: Daily irradiation ratio (10° / 5°)
+      - name: hist_median_ratio_30_10
+        description: Historical median of irr_ratio_30_10 for this calendar month (all years)
+      - name: hist_median_ratio_30_5
+        description: Historical median of irr_ratio_30_5 for this calendar month (all years)
+      - name: hist_median_ratio_10_5
+        description: Historical median of irr_ratio_10_5 for this calendar month (all years)
+      - name: flag_ratio_30_10
+        description: "1 if today's ratio_30_10 deviates > 40% from historical monthly median"
+      - name: flag_ratio_30_5
+        description: "1 if today's ratio_30_5 deviates > 40% from historical monthly median"
+      - name: flag_ratio_10_5
+        description: "1 if today's ratio_10_5 deviates > 40% from historical monthly median"
+      - name: flag_cross_inclination
+        description: >
+          1 if this inclination's sensor appears anomalous relative to others.
+          Logic: 30° = both corr_30_10 and corr_30_5 low.
+                 10° = corr_30_10 low while corr_30_5 fine.
+                  5° = corr_30_5 low while corr_30_10 fine.
+          Irradiation ratio flags used as corroborating evidence.
+          NULL if fewer than 20 paired readings available.
+
+      # Test 3 — clear-sky envelope
+      - name: irr_peak_wm2
+        description: Maximum 5-min irr_cell reading for this date (W/m²)
+      - name: irr_daily_kwh
+        description: Total daily irradiation from irr_cell (kWh/m²)
+      - name: clear_sky_peak_wm2
+        description: Theoretical clear-sky peak irradiance from seed (W/m²)
+      - name: clear_sky_daily_kwh_m2
+        description: Theoretical clear-sky daily irradiation from seed (kWh/m²)
+      - name: flag_clear_sky_exceeded
+        description: "1 if irr_peak_wm2 > clear_sky_peak_wm2 × 1.15 (physically impossible spike)"
+      - name: flag_clear_sky_low
+        description: >
+          1 if irr_daily_kwh < clear_sky_daily_kwh_m2 × 0.10 on a day where
+          clear_sky_daily_kwh_m2 >= 1.0 and at least 10 readings exist.
+          NULL for short winter days or days with sparse data.
+
+      # Combined
+      - name: combined_reliability_score
+        description: >
+          Sum of the 4 flags (NULLs treated as 0). Range 0–4.
+          Score >= 2 = multiple tests agree: strong candidate for review.
+          Score = 1 = single flag: worth noting but may be noise.
+  - name: int_temp_reliability_flags
+    description: >
+      Phase 5 module temperature reliability QA. FOR VISUAL REVIEW ONLY —
+      does not modify data or auto-populate seed_manual_overrides.
+      Grain: one row per (reading_at, system_id).
+      Systems covered: 2, 3, 8, 9, 10, 11 (those with physical temp sensors).
+      combined_temp_reliability_score >= 2 = strong candidate for visual review.
+    columns:
+      - name: reading_at
+        description: 5-minute timestamp (Spanish local time, DST-corrected)
+      - name: system_id
+        description: System identifier (2, 3, 8, 9, 10, or 11)
+
+      # Test 1 — cross-system consistency
+      - name: temp_module
+        description: Raw module temperature reading (°C)
+      - name: median_temp_30deg
+        description: >
+          Per-timestamp median of temp_module across reliable 30° systems.
+          System 10 excluded after May 2015.
+      - name: deviation_from_median_c
+        description: temp_module − median_temp_30deg (°C). Negative = cooler than peers.
+      - name: n_systems_in_median
+        description: Number of systems contributing to the median at this timestamp
+      - name: flag_cross_system
+        description: >
+          1 if |deviation_from_median_c| > 10°C.
+          NULL if fewer than 2 systems available or system is not 30°.
+
+      # Test 2 — TNOC consistency
+      - name: daily_median_abs_dev_tnoc_c
+        description: >
+          Daily median of |temp_module − TNOC_expected| for this system (°C).
+          TNOC_expected = temp_ambient + (TNOC−20) × (irr_cell/800).
+      - name: n_tnoc_readings
+        description: Number of readings used to compute daily_median_abs_dev_tnoc_c
+      - name: flag_tnoc_deviation
+        description: >
+          1 if daily_median_abs_dev_tnoc_c > 5°C (persistent systematic deviation).
+          NULL if fewer than 10 readings available for the day.
+
+      # Test 3 — physical plausibility
+      - name: temp_ambient_final
+        description: >
+          Ambient temperature used for plausibility check.
+          Reverse-TNOC derived for Feb 2013–Mar 2016; raw sensor otherwise.
+      - name: flag_physical
+        description: >
+          1 if temp_module < temp_ambient_final (cooler than air in sunlight)
+          OR temp_module > temp_ambient_final + 50°C (physically implausible high).
+          NULL if temp_ambient_final is not available.
+
+      # Combined
+      - name: combined_temp_reliability_score
+        description: >
+          Sum of the 3 flags (NULLs treated as 0). Range 0–3.
+          Score >= 2 = multiple tests agree: strong candidate for review.
