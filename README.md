@@ -26,10 +26,10 @@ It replaces a 500-line monolithic Python script with a fully modular, tested, an
 
 ```mermaid
 flowchart LR
-    A[131 CSV files\nMeteocontrol] -->|Python conversion| B[Parquet files\nAWS S3]
-    B -->|Airflow DAG| C[BigQuery\nRaw tables]
-    C -->|dbt| D[Staging\nIntermediate\nMart models]
-    D -->|Streamlit| E[Interactive\nDashboard]
+    A["131 CSV files<br/>Meteocontrol"] -->|Python conversion| B["Parquet files<br/>AWS S3"]
+    B -->|Airflow DAG| C["BigQuery<br/>Raw tables"]
+    C -->|dbt| D["Staging<br/>Intermediate<br/>Mart models"]
+    D -->|Streamlit| E["Interactive<br/>Dashboard"]
 
     subgraph Infra
         F[Terraform] --> B
@@ -52,15 +52,15 @@ The Streamlit dashboard connects directly to BigQuery and provides interactive a
 
 | Raw Daily PR Trends | 30-day Average PR Trends |
 |---|---|
-| ![Raw daily PR](dashboard/screenshots/daily_raw_pr.png) | ![30-day average PR](dashboard/screenshots/daily_30-day-average_pr.png) |
+| ![Raw daily PR](dashboard/screenshots/daily_pr_raw.png) | ![30-day average PR](dashboard/screenshots/daily_pr_trends.png) |
 
 | Monthly Performance Comparison | PR vs Irradiance |
 |---|---|
-| ![Monthly comparison](dashboard/screenshots/monthly_pr.png) | ![PR vs irradiance](dashboard/screenshots/daily_irradiation_vs_pr.png) |
+| ![Monthly comparison](dashboard/screenshots/monthly_pr.png) | ![PR vs irradiance](dashboard/screenshots/pr_vs_irradiance.png) |
 
 | Data Quality Heatmap |
 |---|
-| ![Data quality](dashboard/screenshots/monthly_availability_per_system.png) |
+| ![Data quality](dashboard/screenshots/data_quality_heatmap.png) |
 
 **Charts:**
 - Daily Performance Ratio trends — raw and 30-day smoothed, multi-system, date range selector
