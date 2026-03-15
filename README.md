@@ -52,15 +52,15 @@ The Streamlit dashboard connects directly to BigQuery and provides interactive a
 
 | Raw Daily PR Trends | 30-day Average PR Trends |
 |---|---|
-| ![Raw daily PR](dashboard/screenshots/daily_pr_raw.png) | ![30-day average PR](dashboard/screenshots/daily_pr_trends.png) |
+| ![Raw daily PR](dashboard/screenshots/daily_raw_pr.png) | ![30-day average PR](dashboard/screenshots/daily_30-day-average_pr.png) |
 
 | Monthly Performance Comparison | PR vs Irradiance |
 |---|---|
-| ![Monthly comparison](dashboard/screenshots/monthly_pr.png) | ![PR vs irradiance](dashboard/screenshots/pr_vs_irradiance.png) |
+| ![Monthly comparison](dashboard/screenshots/monthly_pr.png) | ![PR vs irradiance](dashboard/screenshots/daily_irradiation_vs_pr.png) |
 
 | Data Quality Heatmap |
 |---|
-| ![Data quality](dashboard/screenshots/data_quality_heatmap.png) |
+| ![Data quality](dashboard/screenshots/monthly_availability_per_system.png) |
 
 **Charts:**
 - Daily Performance Ratio trends — raw and 30-day smoothed, multi-system, date range selector
