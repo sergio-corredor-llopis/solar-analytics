@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: stg_solar_readings
+    description: "Cleaned and renamed solar readings from Meteocontrol. One row per 5/15-min interval."
+    columns:
+      - name: reading_at
+        description: "Interval timestamp, cast from INT64 nanoseconds to TIMESTAMP"
+        tests:
+          - not_null
+      - name: year
+        description: "Partition year"
+        tests:
+          - not_null
+      - name: month
+        description: "Partition month"
+        tests:
+          - not_null
+      - name: source_file
+        description: "Source CSV filename for lineage tracing"
+        tests:
+          - not_null
