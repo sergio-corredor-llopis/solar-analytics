@@ -251,7 +251,7 @@ solar-analytics/
 
 ## What's Next
 
-- **dbt Fundamentals certification** — in progress
+- **dbt Fundamentals certification**
 - **Streamlit Cloud deployment** — for live demo without local setup
 - **Databricks integration** — migrate heavy transformations to Spark for scale
 - **Reliability flag review** — statistical QA flags ready for domain expert review
