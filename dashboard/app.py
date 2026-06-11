@@ -225,7 +225,7 @@ def chart_data_quality(monthly: pd.DataFrame, systems, incl, date_range):
 
 def main():
     st.title("☀️ Solar Analytics Dashboard")
-    st.caption("13 PV systems · 10 years · ISO 61724 Performance Ratio · Validation accuracy: 0.003%")
+    st.caption("13 PV systems · 10 years · IEC 61724 Performance Ratio · Validation accuracy: 0.003%")
 
     with st.spinner("Loading from BigQuery…"):
         daily   = load_daily()

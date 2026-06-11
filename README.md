@@ -16,7 +16,7 @@
 
 This project processes and analyses 10 years of solar irradiance and power output data from 13 photovoltaic systems (February 2013 – December 2023), originally stored in 131 monthly CSVs from a Meteocontrol monitoring system at UPM (Universidad Politécnica de Madrid).
 
-The pipeline transforms raw sensor readings into ISO 61724-compliant Performance Ratio (PR) metrics, with a validated accuracy of **0.003% vs independent Python (pandas/numpy) calculations**.
+The pipeline transforms raw sensor readings into IEC 61724-compliant Performance Ratio (PR) metrics, with a validated accuracy of **0.003% vs independent Python (pandas/numpy) calculations**.
 
 It replaces a 500-line monolithic Python script with a fully modular, tested, and reproducible cloud pipeline — with an interactive Streamlit dashboard on top.
 
@@ -41,7 +41,7 @@ flowchart LR
 
 1. **Ingestion** — 131 monthly CSVs converted to Parquet and uploaded to S3 via Python scripts (`src/`)
 2. **Orchestration** — Airflow DAG (Dockerised) loads Parquet files from S3 into BigQuery raw tables
-3. **Transformation** — dbt models clean, validate, and compute ISO 61724 metrics across 3 layers (staging → intermediate → mart)
+3. **Transformation** — dbt models clean, validate, and compute IEC 61724 metrics across 3 layers (staging → intermediate → mart)
 4. **Visualisation** — Streamlit dashboard connected to BigQuery mart tables, with interactive filters and 4 chart types
 
 ---
@@ -116,7 +116,7 @@ models/
 │   ├── int_irr_reliability_flags   # Statistical QA: ratio, correlation, clear-sky
 │   └── int_temp_reliability_flags  # Statistical QA: cross-system, TNOC, plausibility
 └── marts/
-    ├── mart_daily_performance      # ISO 61724 metrics per system per day
+    ├── mart_daily_performance      # IEC 61724 metrics per system per day
     ├── mart_monthly_performance    # Monthly aggregation (ratios recalculated from sums)
     └── mart_annual_performance     # Annual aggregation (days-weighted)
 ```
@@ -129,7 +129,7 @@ models/
 
 **Sensor failure handling** — The pipeline handles 9 categories of known sensor failures, including a 9-month complete irradiance blackout (Oct 2017 – Jul 2018) recovered via reverse-TNOC derivation, a degraded pyranometer nullified from Oct 2021, a DST logging bug affecting 3 systems in 2017, and a +5–6°C ambient temperature offset active from 2013 to 2016.
 
-**ISO 61724 metrics** — Full implementation of reference yield (Yr), array yield (Ya), final yield (Yf), capture losses (Lc), BOS losses (LBOS), and Performance Ratio (PR), including temperature-corrected and irradiance-corrected PR variants.
+**IEC 61724 metrics** — Full implementation of reference yield (Yr), array yield (Ya), final yield (Yf), capture losses (Lc), BOS losses (LBOS), and Performance Ratio (PR), including temperature-corrected and irradiance-corrected PR variants.
 
 **Data quality tracking** — Every output row carries provenance flags: `pct_reconstructed`, `pct_interpolated`, `pct_temp_estimated`, `pct_ambient_derived`. No silent data fabrication.
 
@@ -262,4 +262,4 @@ solar-analytics/
 
 Built as a portfolio project during a career transition from Software Engineer (REE — Spanish TSO, 4 years) to Data Engineer. The original analysis was a 500-line Python script processing solar monitoring data from a UPM university research collaboration. This project rebuilds it as a production-grade pipeline using current data engineering tooling.
 
-Domain: photovoltaic performance analysis, ISO 61724, Spanish transmission grid data.
+Domain: photovoltaic performance analysis, IEC 61724, Spanish transmission grid data.

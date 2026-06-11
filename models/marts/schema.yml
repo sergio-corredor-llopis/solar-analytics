@@ -2,7 +2,7 @@ version: 2
 
 models:
   - name: mart_daily_performance
-    description: "ISO 61724 daily energy metrics per system"
+    description: "IEC 61724 daily energy metrics per system"
     columns:
       - name: system_id
         tests:
@@ -35,7 +35,7 @@ models:
           expression: "pr_pct <= 110 OR pr_pct IS NULL"
 
   - name: mart_monthly_performance
-    description: "ISO 61724 monthly energy metrics per system"
+    description: "IEC 61724 monthly energy metrics per system"
     columns:
       - name: system_id
         tests:
@@ -57,7 +57,7 @@ models:
       - dbt_utils.expression_is_true:
           expression: "days_with_data <= days_in_month"
   - name: mart_annual_performance
-    description: "ISO 61724 annual energy metrics per system"
+    description: "IEC 61724 annual energy metrics per system"
     columns:
       - name: system_id
         tests:
