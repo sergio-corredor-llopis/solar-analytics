@@ -1,6 +1,6 @@
 # Solar Performance Analytics Platform
 
-> End-to-end data pipeline and analytics platform for 10 years of photovoltaic performance data — built with Python, dbt, BigQuery, and Streamlit.
+> End-to-end data pipeline and analytics platform for 10 years of photovoltaic performance data : built with Python, dbt, BigQuery, and Streamlit.
 
 ![Python](https://img.shields.io/badge/Python-3.9-blue?logo=python&logoColor=white)
 ![dbt](https://img.shields.io/badge/dbt-1.x-orange?logo=dbt&logoColor=white)
@@ -18,7 +18,7 @@ This project processes and analyses 10 years of solar irradiance and power outpu
 
 The pipeline transforms raw sensor readings into IEC 61724-compliant Performance Ratio (PR) metrics, with a validated accuracy of **0.003% vs independent Python (pandas/numpy) calculations**.
 
-It replaces a 500-line monolithic Python script with a fully modular, tested, and reproducible cloud pipeline — with an interactive Streamlit dashboard on top.
+It replaces a 500-line monolithic Python script with a fully modular, tested, and reproducible cloud pipeline, with an interactive Streamlit dashboard on top.
 
 ---
 
@@ -39,10 +39,10 @@ flowchart LR
 
 **Pipeline stages:**
 
-1. **Ingestion** — 131 monthly CSVs converted to Parquet and uploaded to S3 via Python scripts (`src/`)
-2. **Orchestration** — Airflow DAG (Dockerised) loads Parquet files from S3 into BigQuery raw tables
-3. **Transformation** — dbt models clean, validate, and compute IEC 61724 metrics across 3 layers (staging → intermediate → mart)
-4. **Visualisation** — Streamlit dashboard connected to BigQuery mart tables, with interactive filters and 4 chart types
+1. **Ingestion** : 131 monthly CSVs converted to Parquet and uploaded to S3 via Python scripts (`src/`)
+2. **Orchestration** : Airflow DAG (Dockerised) loads Parquet files from S3 into BigQuery raw tables
+3. **Transformation** : dbt models clean, validate, and compute IEC 61724 metrics across 3 layers (staging → intermediate → mart)
+4. **Visualisation** : Streamlit dashboard connected to BigQuery mart tables, with interactive filters and 4 chart types
 
 ---
 
@@ -63,10 +63,10 @@ The Streamlit dashboard connects directly to BigQuery and provides interactive a
 | ![Data quality](dashboard/screenshots/monthly_availability_per_system.png) |
 
 **Charts:**
-- Daily Performance Ratio trends — raw and 30-day smoothed, multi-system, date range selector
-- Monthly performance comparison — bar chart, all 13 systems grouped by inclination
-- PR vs irradiance scatter — all systems, highlights irradiance correction effect
-- Data quality heatmap — system × month, colour = data availability %
+- Daily Performance Ratio trends : raw and 30-day smoothed, multi-system, date range selector
+- Monthly performance comparison : bar chart, all 13 systems grouped by inclination
+- PR vs irradiance scatter : all systems, highlights irradiance correction effect
+- Data quality heatmap : system × month, colour = data availability %
 
 **Filters:** system ID, date range, inclination group (5° / 10° / 30°)
 
@@ -127,13 +127,13 @@ models/
 
 ## Technical Highlights
 
-**Sensor failure handling** — The pipeline handles 9 categories of known sensor failures, including a 9-month complete irradiance blackout (Oct 2017 – Jul 2018) recovered via reverse-TNOC derivation, a degraded pyranometer nullified from Oct 2021, a DST logging bug affecting 3 systems in 2017, and a +5–6°C ambient temperature offset active from 2013 to 2016.
+**Sensor failure handling** : The pipeline handles 9 categories of known sensor failures, including a 9-month complete irradiance blackout (Oct 2017 – Jul 2018) recovered via reverse-TNOC derivation, a degraded pyranometer nullified from Oct 2021, a DST logging bug affecting 3 systems in 2017, and a +5–6°C ambient temperature offset active from 2013 to 2016.
 
 **IEC 61724 metrics** — Full implementation of reference yield (Yr), array yield (Ya), final yield (Yf), capture losses (Lc), BOS losses (LBOS), and Performance Ratio (PR), including temperature-corrected and irradiance-corrected PR variants.
 
-**Data quality tracking** — Every output row carries provenance flags: `pct_reconstructed`, `pct_interpolated`, `pct_temp_estimated`, `pct_ambient_derived`. No silent data fabrication.
+**Data quality tracking** : Every output row carries provenance flags: `pct_reconstructed`, `pct_interpolated`, `pct_temp_estimated`, `pct_ambient_derived`. No silent data fabrication.
 
-**Reproducibility** — All sensor overrides and bounds are in version-controlled seed CSV files. Any result is fully reproducible from raw CSVs.
+**Reproducibility** : All sensor overrides and bounds are in version-controlled seed CSV files. Any result is fully reproducible from raw CSVs.
 
 ---
 
@@ -252,9 +252,9 @@ solar-analytics/
 ## What's Next
 
 - **dbt Fundamentals certification**
-- **Streamlit Cloud deployment** — for live demo without local setup
-- **Databricks integration** — migrate heavy transformations to Spark for scale
-- **Reliability flag review** — statistical QA flags ready for domain expert review
+- **Streamlit Cloud deployment** : for live demo without local setup
+- **Databricks integration** : migrate heavy transformations to Spark for scale
+- **Reliability flag review** : statistical QA flags ready for domain expert review
 
 ---
 
