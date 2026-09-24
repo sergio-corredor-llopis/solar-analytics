@@ -1,6 +1,6 @@
 # Solar Performance Analytics Platform
 
-> End-to-end data pipeline and analytics platform for 10 years of photovoltaic performance data : built with Python, dbt, BigQuery, and Streamlit.
+> End-to-end data pipeline and analytics platform for 11 years (2013–2023) of photovoltaic performance data : built with Python, dbt, BigQuery, and Streamlit.
 
 ![Python](https://img.shields.io/badge/Python-3.9-blue?logo=python&logoColor=white)
 ![dbt](https://img.shields.io/badge/dbt-1.x-orange?logo=dbt&logoColor=white)
@@ -15,7 +15,7 @@
 
 ## Overview
 
-This project processes and analyses 10 years of solar irradiance and power output data from 13 photovoltaic systems (February 2013 – December 2023), originally stored in 131 monthly CSVs from a Meteocontrol monitoring system at UPM (Universidad Politécnica de Madrid).
+This project processes and analyses 11 years (2013–2023) of solar irradiance and power output data from 13 photovoltaic systems (February 2013 – December 2023), originally stored in 131 monthly CSVs from a Meteocontrol monitoring system at UPM (Universidad Politécnica de Madrid).
 
 The pipeline transforms raw sensor readings into IEC 61724-compliant Performance Ratio (PR) metrics, with a validated accuracy of **0.003% vs independent Python (pandas/numpy) calculations**.
 
@@ -78,7 +78,7 @@ The Streamlit dashboard connects directly to BigQuery and provides interactive a
 | Metric | Value |
 |---|---|
 | Systems | 13 PV systems |
-| Data span | 10 years (Feb 2013 – Dec 2023) |
+| Data span | 11 years (Feb 2013 – Dec 2023) |
 | Raw readings | ~14.3 million rows |
 | Complete daytime readings | ~4.4 million rows |
 | Validation accuracy | **0.003% vs independent Python calculations** (3 independent checks) |
@@ -102,7 +102,7 @@ Models were developed in dbt Cloud IDE and can be imported into any dbt project 
 models/
 ├── staging/
 │   └── stg_solar_readings          # Cast, rename, filter 262 null rows
-├── intermediate/                   # 14 models
+├── intermediate/                   # 13 models
 │   ├── int_readings_unpivoted      # Wide→long (13-way UNION ALL) + DST fix
 │   ├── int_readings_cleaned        # Manual overrides + range bounds
 │   ├── int_irr_30deg_reconstructed # Cell irradiance from pyranometer (regression)
@@ -144,6 +144,19 @@ models/
 | `sqlfluff-lint` | dbt SQL style | Advisory, `continue-on-error: true` — does not gate the badge |
 
 **Why CI stops at `dbt parse`:** this project's dbt models run on **dbt Cloud's free Developer plan**, not dbt Core CLI — there is no CI-accessible BigQuery warehouse to run `dbt test`/`dbt build` against without provisioning one or committing a service-account key to a public portfolio repo. `dbt parse` is the honest ceiling for credential-free CI: it validates that the entire project compiles (every model, every macro, every schema.yml) without touching the warehouse. The full `dbt test` suite above runs in the dbt Cloud IDE / a scheduled dbt Cloud job against real data — see "How to Run" → dbt transformation, below.
+
+---
+
+## Data-Quality Findings
+
+The quality checks were not only a final gate: they shaped the pipeline while it was being built.
+During development and testing, the checks (per-system physical bounds, cross-system comparisons,
+reliability flags) surfaced **five issues** across the code and the data. Most were in the data:
+periods with missing or unreliable readings beyond the ones I had already identified in months of
+reviewing the same data in dashboards. Each finding was fixed in the pipeline itself, as a code
+change or as a dated, reasoned entry in `seeds/seed_manual_overrides.csv`, and the checks were
+re-run until the outputs were clean. The override seed (76 dated entries today) is the versioned
+record of those data-quality decisions, so the cleaning is reviewable rather than done by eye.
 
 ---
 
