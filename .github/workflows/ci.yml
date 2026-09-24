@@ -1,0 +1,114 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  python-tests:
+    name: Python unit tests (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Run pytest
+        run: pytest tests/unit -v
+
+  dbt-parse:
+    name: dbt parse (structure/syntax check -- no warehouse connection)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dbt-bigquery
+        run: |
+          python -m pip install --upgrade pip
+          pip install "dbt-bigquery>=1.7,<2"
+
+      # ------------------------------------------------------------------
+      # This project's dbt models run on dbt Cloud's free Developer plan,
+      # not dbt Core CLI -- there is no CI-accessible BigQuery warehouse to
+      # run `dbt test` / `dbt build` against without provisioning one or
+      # committing a service-account key to a public portfolio repo.
+      # `dbt parse` is the honest ceiling for a credential-free CI step: it
+      # builds the full manifest (resolves every ref()/source(), validates
+      # every schema.yml, checks Jinja/SQL syntax across the whole DAG)
+      # WITHOUT opening a warehouse connection. It does NOT run `dbt test`
+      # or `dbt run`/`dbt build` -- those stay a dbt Cloud IDE / scheduled
+      # dbt Cloud job action. See README "Testing & CI" for the full split.
+      # ------------------------------------------------------------------
+      - name: Write CI-only placeholder profile (no real credentials)
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml <<'EOF'
+          default:
+            target: ci
+            outputs:
+              ci:
+                type: bigquery
+                method: oauth
+                project: ci-placeholder-project
+                dataset: ci_placeholder_dataset
+                threads: 1
+          EOF
+
+      - name: dbt deps
+        run: dbt deps
+
+      - name: dbt parse
+        run: dbt parse
+
+  sqlfluff-lint:
+    name: sqlfluff lint (dbt SQL style -- advisory, non-blocking)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install sqlfluff + dbt templater
+        run: |
+          python -m pip install --upgrade pip
+          pip install "sqlfluff>=3,<4" "sqlfluff-templater-dbt>=3,<4" "dbt-bigquery>=1.7,<2"
+
+      - name: Write CI-only placeholder profile (no real credentials)
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml <<'EOF'
+          default:
+            target: ci
+            outputs:
+              ci:
+                type: bigquery
+                method: oauth
+                project: ci-placeholder-project
+                dataset: ci_placeholder_dataset
+                threads: 1
+          EOF
+
+      - name: dbt deps
+        run: dbt deps
+
+      - name: sqlfluff lint
+        run: sqlfluff lint models/ --dialect bigquery

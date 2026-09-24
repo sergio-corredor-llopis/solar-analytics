@@ -9,6 +9,7 @@
 ![BigQuery](https://img.shields.io/badge/BigQuery-analytics-4285F4?logo=googlebigquery&logoColor=white)
 ![Streamlit](https://img.shields.io/badge/Streamlit-dashboard-FF4B4B?logo=streamlit&logoColor=white)
 ![Terraform](https://img.shields.io/badge/Terraform-infra-7B42BC?logo=terraform&logoColor=white)
+![CI](https://github.com/sergio-corredor-llopis/solar-analytics/actions/workflows/ci.yml/badge.svg)
 
 ---
 
@@ -125,6 +126,27 @@ models/
 
 ---
 
+## Testing & CI
+
+**dbt tests — 17 models, ~69 test declarations.** Every layer carries schema tests: `models/schema.yml` (staging, 4 `not_null`), `models/intermediate/schema.yml` (13 models, `not_null` + `accepted_values` on enum-shaped columns like `system_id`, `inclination_deg`, `sun_method`), `models/marts/schema.yml` (3 models, `unique` composite-key tests + custom `dbt_utils.expression_is_true` SQL assertions — e.g. `e_ac_kwh >= 0`, `pr_pct <= 110`, `e_dc_kwh >= e_ac_kwh`).
+
+**Python unit tests — `tests/unit/` (13 tests, pytest).** Covers the pure-logic and file-integrity paths of the ingestion scripts against synthetic Parquet fixtures — no AWS/GCP credentials or the real 131-file dataset required:
+- `test_data_conversion.py` — filename-parsing regex (`parse_filename`)
+- `test_validate_parquet.py` — physical-bounds config sanity + the file-count / schema-consistency / non-empty / out-of-bounds validation logic in `validate_parquet_quality`
+- `test_verify_conversion.py` — row/column aggregation in `verify_all_parquet`
+
+**CI — `.github/workflows/ci.yml`.** Runs on every push/PR to `main`:
+
+| Job | Checks | Scope |
+|---|---|---|
+| `python-tests` | `pytest tests/unit -v` | The 13 tests above |
+| `dbt-parse` | `dbt parse` | Project structure, Jinja/SQL syntax, `ref()`/`source()` resolution, schema YAML validity — **no warehouse connection** |
+| `sqlfluff-lint` | dbt SQL style | Advisory, `continue-on-error: true` — does not gate the badge |
+
+**Why CI stops at `dbt parse`:** this project's dbt models run on **dbt Cloud's free Developer plan**, not dbt Core CLI — there is no CI-accessible BigQuery warehouse to run `dbt test`/`dbt build` against without provisioning one or committing a service-account key to a public portfolio repo. `dbt parse` is the honest ceiling for credential-free CI: it validates that the entire project compiles (every model, every macro, every schema.yml) without touching the warehouse. The full `dbt test` suite above runs in the dbt Cloud IDE / a scheduled dbt Cloud job against real data — see "How to Run" → dbt transformation, below.
+
+---
+
 ## Technical Highlights
 
 **Sensor failure handling** : The pipeline handles 9 categories of known sensor failures, including a 9-month complete irradiance blackout (Oct 2017 – Jul 2018) recovered via reverse-TNOC derivation, a degraded pyranometer nullified from Oct 2021, a DST logging bug affecting 3 systems in 2017, and a +5–6°C ambient temperature offset active from 2013 to 2016.
@@ -227,6 +249,8 @@ solar-analytics-raw-scl-dev/
 
 ```
 solar-analytics/
+├── .github/workflows/
+│   └── ci.yml           # pytest + dbt parse + sqlfluff lint (see Testing & CI)
 ├── terraform/          # AWS infrastructure (S3 bucket, IAM)
 ├── src/                # Python ingestion scripts
 │   ├── data_conversion.py
@@ -234,15 +258,20 @@ solar-analytics/
 │   ├── upload_to_s3.py
 │   ├── verify_s3_upload.py
 │   └── validate_parquet.py
+├── tests/
+│   ├── unit/            # pytest — src/ script logic (synthetic fixtures)
+│   └── *.sql            # dbt singular tests (none yet; directory reserved)
 ├── airflow/
 │   ├── docker-compose.yaml
 │   └── dags/solar_pipeline_dag.py
-├── models/             # dbt models (staging + intermediate + marts)
+├── models/             # dbt models (staging + intermediate + marts) + schema.yml tests
 ├── seeds/              # dbt seed files (7 reference CSVs)
 ├── dashboard/
 │   ├── app.py
 │   ├── requirements.txt
 │   └── screenshots/
+├── conftest.py          # anchors pytest rootdir so tests/ can `from src... import`
+├── .sqlfluff             # dbt SQL lint config (advisory CI job)
 ├── requirements.txt
 └── README.md
 ```
