@@ -70,6 +70,7 @@ def test_validate_parquet_quality_flags_schema_mismatch_and_empty_file(tmp_path,
 
 def test_validate_parquet_quality_warns_on_out_of_bounds_reading(tmp_path, monkeypatch):
     monkeypatch.setattr(vp, "EXPECTED_FILES", 1)
+    monkeypatch.setattr(vp, "EXPECTED_COLUMNS", 2)
     _write_fixture(tmp_path, 2013, 2, {
         "timestamp": pd.date_range("2013-02-01", periods=2, freq="D"),
         "G_H": [100, 5000],  # 5000 W/m^2 is far above the 1500 max bound
@@ -81,6 +82,7 @@ def test_validate_parquet_quality_warns_on_out_of_bounds_reading(tmp_path, monke
 
 def test_validate_parquet_quality_clean_file_has_no_warnings(tmp_path, monkeypatch):
     monkeypatch.setattr(vp, "EXPECTED_FILES", 1)
+    monkeypatch.setattr(vp, "EXPECTED_COLUMNS", 2)
     _write_fixture(tmp_path, 2013, 2, {
         "timestamp": pd.date_range("2013-02-01", periods=2, freq="D"),
         "G_H": [100, 200],
