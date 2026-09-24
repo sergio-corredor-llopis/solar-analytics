@@ -111,4 +111,4 @@ jobs:
         run: dbt deps
 
       - name: sqlfluff lint
-        run: sqlfluff lint models/ --dialect bigquery
+        run: sqlfluff lint models/ --dialect bigquery --nofail

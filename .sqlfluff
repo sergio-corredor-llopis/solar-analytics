@@ -1,13 +1,11 @@
 [sqlfluff]
-templater = dbt
+templater = jinja
 dialect = bigquery
 runaway_limit = 10
 max_line_length = 120
 
-[sqlfluff:templater:dbt]
-project_dir = ./
-profiles_dir = ~/.dbt
-target = ci
+[sqlfluff:templater:jinja]
+apply_dbt_builtins = True
 
 # Advisory lint only (see .github/workflows/ci.yml sqlfluff-lint job -- it is
 # continue-on-error and does not gate the CI badge). Rules are left at
