@@ -1,6 +1,6 @@
 # Solar Performance Analytics Platform
 
-> End-to-end data pipeline and analytics platform for 10 years of photovoltaic performance data : built with Python, dbt, BigQuery, and Streamlit.
+> End-to-end data pipeline and analytics platform for 11 years (2013–2023) of photovoltaic performance data : built with Python, dbt, BigQuery, and Streamlit.
 
 ![Python](https://img.shields.io/badge/Python-3.9-blue?logo=python&logoColor=white)
 ![dbt](https://img.shields.io/badge/dbt-1.x-orange?logo=dbt&logoColor=white)
@@ -9,12 +9,13 @@
 ![BigQuery](https://img.shields.io/badge/BigQuery-analytics-4285F4?logo=googlebigquery&logoColor=white)
 ![Streamlit](https://img.shields.io/badge/Streamlit-dashboard-FF4B4B?logo=streamlit&logoColor=white)
 ![Terraform](https://img.shields.io/badge/Terraform-infra-7B42BC?logo=terraform&logoColor=white)
+![CI](https://github.com/sergio-corredor-llopis/solar-analytics/actions/workflows/ci.yml/badge.svg)
 
 ---
 
 ## Overview
 
-This project processes and analyses 10 years of solar irradiance and power output data from 13 photovoltaic systems (February 2013 – December 2023), originally stored in 131 monthly CSVs from a Meteocontrol monitoring system at UPM (Universidad Politécnica de Madrid).
+This project processes and analyses 11 years (2013–2023) of solar irradiance and power output data from 13 photovoltaic systems (February 2013 – December 2023), originally stored in 131 monthly CSVs from a Meteocontrol monitoring system at UPM (Universidad Politécnica de Madrid).
 
 The pipeline transforms raw sensor readings into IEC 61724-compliant Performance Ratio (PR) metrics, with a validated accuracy of **0.003% vs independent Python (pandas/numpy) calculations**.
 
@@ -77,7 +78,7 @@ The Streamlit dashboard connects directly to BigQuery and provides interactive a
 | Metric | Value |
 |---|---|
 | Systems | 13 PV systems |
-| Data span | 10 years (Feb 2013 – Dec 2023) |
+| Data span | 11 years (Feb 2013 – Dec 2023) |
 | Raw readings | ~14.3 million rows |
 | Complete daytime readings | ~4.4 million rows |
 | Validation accuracy | **0.003% vs independent Python calculations** (3 independent checks) |
@@ -101,7 +102,7 @@ Models were developed in dbt Cloud IDE and can be imported into any dbt project 
 models/
 ├── staging/
 │   └── stg_solar_readings          # Cast, rename, filter 262 null rows
-├── intermediate/                   # 14 models
+├── intermediate/                   # 13 models
 │   ├── int_readings_unpivoted      # Wide→long (13-way UNION ALL) + DST fix
 │   ├── int_readings_cleaned        # Manual overrides + range bounds
 │   ├── int_irr_30deg_reconstructed # Cell irradiance from pyranometer (regression)
@@ -122,6 +123,40 @@ models/
 ```
 
 **Seeds (7 files):** system metadata, interval definitions, manual overrides (68 rows), per-system bounds, astronomical sun times (4,017 rows), clear-sky envelope (11,958 rows), donor days stub.
+
+---
+
+## Testing & CI
+
+**dbt tests — 17 models, ~69 test declarations.** Every layer carries schema tests: `models/schema.yml` (staging, 4 `not_null`), `models/intermediate/schema.yml` (13 models, `not_null` + `accepted_values` on enum-shaped columns like `system_id`, `inclination_deg`, `sun_method`), `models/marts/schema.yml` (3 models, `unique` composite-key tests + custom `dbt_utils.expression_is_true` SQL assertions — e.g. `e_ac_kwh >= 0`, `pr_pct <= 110`, `e_dc_kwh >= e_ac_kwh`).
+
+**Python unit tests — `tests/unit/` (13 tests, pytest).** Covers the pure-logic and file-integrity paths of the ingestion scripts against synthetic Parquet fixtures — no AWS/GCP credentials or the real 131-file dataset required:
+- `test_data_conversion.py` — filename-parsing regex (`parse_filename`)
+- `test_validate_parquet.py` — physical-bounds config sanity + the file-count / schema-consistency / non-empty / out-of-bounds validation logic in `validate_parquet_quality`
+- `test_verify_conversion.py` — row/column aggregation in `verify_all_parquet`
+
+**CI — `.github/workflows/ci.yml`.** Runs on every push/PR to `main`:
+
+| Job | Checks | Scope |
+|---|---|---|
+| `python-tests` | `pytest tests/unit -v` | The 13 tests above |
+| `dbt-parse` | `dbt parse` | Project structure, Jinja/SQL syntax, `ref()`/`source()` resolution, schema YAML validity — **no warehouse connection** |
+| `sqlfluff-lint` | dbt SQL style | Advisory, `continue-on-error: true` — does not gate the badge |
+
+**Why CI stops at `dbt parse`:** this project's dbt models run on **dbt Cloud's free Developer plan**, not dbt Core CLI — there is no CI-accessible BigQuery warehouse to run `dbt test`/`dbt build` against without provisioning one or committing a service-account key to a public portfolio repo. `dbt parse` is the honest ceiling for credential-free CI: it validates that the entire project compiles (every model, every macro, every schema.yml) without touching the warehouse. The full `dbt test` suite above runs in the dbt Cloud IDE / a scheduled dbt Cloud job against real data — see "How to Run" → dbt transformation, below.
+
+---
+
+## Data-Quality Findings
+
+The quality checks were not only a final gate: they shaped the pipeline while it was being built.
+During development and testing, the checks (per-system physical bounds, cross-system comparisons,
+reliability flags) surfaced **five issues** across the code and the data. Most were in the data:
+periods with missing or unreliable readings beyond the ones I had already identified in months of
+reviewing the same data in dashboards. Each finding was fixed in the pipeline itself, as a code
+change or as a dated, reasoned entry in `seeds/seed_manual_overrides.csv`, and the checks were
+re-run until the outputs were clean. The override seed (76 dated entries today) is the versioned
+record of those data-quality decisions, so the cleaning is reviewable rather than done by eye.
 
 ---
 
@@ -227,6 +262,8 @@ solar-analytics-raw-scl-dev/
 
 ```
 solar-analytics/
+├── .github/workflows/
+│   └── ci.yml           # pytest + dbt parse + sqlfluff lint (see Testing & CI)
 ├── terraform/          # AWS infrastructure (S3 bucket, IAM)
 ├── src/                # Python ingestion scripts
 │   ├── data_conversion.py
@@ -234,15 +271,20 @@ solar-analytics/
 │   ├── upload_to_s3.py
 │   ├── verify_s3_upload.py
 │   └── validate_parquet.py
+├── tests/
+│   ├── unit/            # pytest — src/ script logic (synthetic fixtures)
+│   └── *.sql            # dbt singular tests (none yet; directory reserved)
 ├── airflow/
 │   ├── docker-compose.yaml
 │   └── dags/solar_pipeline_dag.py
-├── models/             # dbt models (staging + intermediate + marts)
+├── models/             # dbt models (staging + intermediate + marts) + schema.yml tests
 ├── seeds/              # dbt seed files (7 reference CSVs)
 ├── dashboard/
 │   ├── app.py
 │   ├── requirements.txt
 │   └── screenshots/
+├── conftest.py          # anchors pytest rootdir so tests/ can `from src... import`
+├── .sqlfluff             # dbt SQL lint config (advisory CI job)
 ├── requirements.txt
 └── README.md
 ```

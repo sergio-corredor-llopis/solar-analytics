@@ -1,0 +1,15 @@
+[sqlfluff]
+templater = jinja
+dialect = bigquery
+runaway_limit = 10
+max_line_length = 120
+
+[sqlfluff:templater:jinja]
+apply_dbt_builtins = True
+
+# Advisory lint only (see .github/workflows/ci.yml sqlfluff-lint job -- it is
+# continue-on-error and does not gate the CI badge). Rules are left at
+# sqlfluff defaults deliberately: this repo's SQL predates any lint pass, so
+# a first real CI run will likely surface a non-trivial finding count. That
+# is expected and informative, not a config bug -- tune excluded rules from
+# the FIRST real run's output, not blind.
