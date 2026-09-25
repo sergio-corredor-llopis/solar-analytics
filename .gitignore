@@ -24,3 +24,12 @@ target/
 dbt_packages/
 logs/
 # end dbt Cloud content
+
+# Secrets: never commit credentials (Streamlit secrets, service-account keys,
+# the credentials file google-github-actions/auth writes into the workspace)
+.streamlit/secrets.toml
+**/.streamlit/secrets.toml
+*service_account*.json
+*-key.json
+gha-creds-*.json
+.env
