@@ -1,4 +1,4 @@
-{{ config(materialized='table') }}
+{{ config(materialized=('view' if target.name == 'prod' else 'table')) }}
 
 /*
   int_readings_complete
