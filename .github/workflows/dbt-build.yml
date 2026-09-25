@@ -1,0 +1,105 @@
+name: dbt build (CD to BigQuery)
+
+# Continuous Deployment: every merge to main rebuilds the production dataset
+# (models + seeds + all dbt tests) that the live Streamlit demo reads.
+# Deliberately NOT triggered by pull_request: a public repo must never hand
+# warehouse credentials to code from an unmerged (possibly forked) PR.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "models/**"
+      - "seeds/**"
+      - "macros/**"
+      - "snapshots/**"
+      - "tests/**"
+      - "dbt_project.yml"
+      - "packages.yml"
+      - "package-lock.yml"
+      - ".github/workflows/dbt-build.yml"
+  workflow_dispatch: {}   # "Run workflow" button in the Actions tab
+  schedule:
+    - cron: "0 5 1 * *"   # 05:00 UTC on the 1st of each month (keeps tables fresh; see RUNBOOK sandbox note)
+
+# Never run two production builds at the same time.
+concurrency:
+  group: dbt-build-prod
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write   # lets GitHub mint a short-lived OIDC token for Workload Identity Federation
+
+jobs:
+  dbt-build:
+    name: dbt build -> BigQuery (prod)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      BQ_LOCATION: ${{ vars.BQ_LOCATION }}
+      BQ_PROD_DATASET: ${{ vars.BQ_PROD_DATASET }}
+      DBT_PROFILES_DIR: ${{ github.workspace }}/.ci_profiles
+    steps:
+      - uses: actions/checkout@v4
+
+      # No JSON key anywhere: GitHub proves "I am a main-branch run of
+      # sergio-corredor-llopis/solar-analytics" and Google swaps that proof
+      # for a 1-hour token of the solar-dbt-cd service account.
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_DBT_SA_EMAIL }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dbt-bigquery
+        run: |
+          python -m pip install --upgrade pip
+          pip install "dbt-bigquery>=1.7,<2"
+
+      - name: Write prod profile (no secrets in it -- auth comes from the step above)
+        run: |
+          mkdir -p "$DBT_PROFILES_DIR"
+          cat > "$DBT_PROFILES_DIR/profiles.yml" <<'YAML'
+          default:
+            target: prod
+            outputs:
+              prod:
+                type: bigquery
+                method: oauth
+                project: "{{ env_var('GCP_PROJECT_ID') }}"
+                dataset: "{{ env_var('BQ_PROD_DATASET') }}"
+                location: "{{ env_var('BQ_LOCATION') }}"
+                threads: 4
+                job_execution_timeout_seconds: 900
+                job_retries: 1
+                # Per-query safety cap: BigQuery refuses any single query that
+                # would scan more than 20 GiB (RUNBOOK section 2).
+                maximum_bytes_billed: 21474836480
+          YAML
+
+      - name: dbt debug (connection check)
+        run: dbt debug --target prod
+
+      - name: dbt deps
+        run: dbt deps
+
+      - name: dbt build (seeds + models + tests)
+        run: dbt build --target prod
+
+      - name: Keep run evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dbt-run-results-${{ github.run_number }}
+          path: |
+            target/run_results.json
+            target/manifest.json
+            logs/dbt.log
+          if-no-files-found: ignore
+          retention-days: 90
