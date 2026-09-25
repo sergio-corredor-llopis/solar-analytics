@@ -1,6 +1,6 @@
 {{
     config(
-        materialized='table',
+        materialized=('view' if target.name == 'prod' else 'table'),
         description='Phase 5 irradiance reliability QA. FOR VISUAL REVIEW ONLY — does not modify data.'
     )
 }}
