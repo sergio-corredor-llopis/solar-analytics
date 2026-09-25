@@ -2,10 +2,33 @@ import streamlit as st
 import plotly.express as px
 import pandas as pd
 from google.cloud import bigquery
+from google.oauth2 import service_account
 
-# ── CONFIG — fill these in ───────────────────────────────────────────────────
-PROJECT_ID = "dbt-tutorial-488323"
-DATASET    = "dbt_sergio"
+
+def _secret(section: str, key: str, default=None):
+    """Read st.secrets[section][key]; fall back to `default` when there is no
+    secrets file (local dev) or the key is missing. Never raises."""
+    try:
+        return st.secrets[section][key]
+    except Exception:
+        return default
+
+
+# ── CONFIG ───────────────────────────────────────────────────────────────────
+# Deployed (Streamlit Community Cloud): values come from the app's Secrets.
+# Local dev: no secrets file needed; these defaults + your own gcloud login
+# (Application Default Credentials) are used, exactly as before.
+PROJECT_ID = _secret("bigquery", "project_id", "dbt-tutorial-488323")
+DATASET    = _secret("bigquery", "dataset", "dbt_sergio")
+
+# Data only changes when a PR is merged (dbt build on main), so a long cache is
+# safe. The cache is shared by ALL visitors: at most one BigQuery refresh per
+# TTL window, however many people open the page.
+CACHE_TTL_SECONDS = 6 * 60 * 60
+
+# Hard per-query ceiling: BigQuery refuses (and bills nothing for) any query
+# from this app that would scan more than this. The real queries scan a few MB.
+MAX_BYTES_BILLED = 1 * 1024**3  # 1 GiB
 # ─────────────────────────────────────────────────────────────────────────────
 
 st.set_page_config(
@@ -19,17 +42,32 @@ st.set_page_config(
 
 @st.cache_resource
 def get_client():
+    # Deployed: read-only service-account key stored ONLY in Streamlit secrets.
+    try:
+        sa_info = dict(st.secrets["gcp_service_account"])
+    except Exception:
+        sa_info = None
+    if sa_info:
+        creds = service_account.Credentials.from_service_account_info(
+            sa_info,
+            scopes=["https://www.googleapis.com/auth/bigquery"],
+        )
+        return bigquery.Client(project=PROJECT_ID, credentials=creds)
+    # Local dev: Application Default Credentials (gcloud auth / env var).
     return bigquery.Client(project=PROJECT_ID)
 
 
-@st.cache_data(ttl=3600)
 def run_query(sql: str) -> pd.DataFrame:
-    return get_client().query(sql).to_dataframe()
+    job_config = bigquery.QueryJobConfig(maximum_bytes_billed=MAX_BYTES_BILLED)
+    job = get_client().query(sql, job_config=job_config)
+    # Small result sets: plain REST download, so the service account does not
+    # need the extra BigQuery Storage "read session" permission.
+    return job.to_dataframe(create_bqstorage_client=False)
 
 
 # ── DATA LOADERS ─────────────────────────────────────────────────────────────
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=CACHE_TTL_SECONDS)
 def load_daily() -> pd.DataFrame:
     sql = f"""
         SELECT
@@ -55,7 +93,7 @@ def load_daily() -> pd.DataFrame:
     return df
 
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=CACHE_TTL_SECONDS)
 def load_monthly() -> pd.DataFrame:
     sql = f"""
         SELECT
@@ -129,13 +167,13 @@ def chart_daily_pr(daily: pd.DataFrame, systems, incl, date_range):
     )
     fig.add_hline(y=100, line_dash="dot", line_color="lightgray")
     fig.update_layout(height=460, legend_title="System")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
     # Key stats row
     stats = df.groupby("system_id")["pr_pct"].agg(["mean", "min", "max"]).round(1)
     stats.columns = ["Mean PR (%)", "Min PR (%)", "Max PR (%)"]
     with st.expander("Summary statistics"):
-        st.dataframe(stats, use_container_width=True)
+        st.dataframe(stats, width="stretch")
 
 
 # ── CHART 2: Monthly Comparison ───────────────────────────────────────────────
@@ -158,7 +196,7 @@ def chart_monthly_pr(monthly: pd.DataFrame, systems, incl, date_range):
     )
     fig.add_hline(y=100, line_dash="dot", line_color="lightgray")
     fig.update_layout(height=460, legend_title="System")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
 
 # ── CHART 3: PR vs Irradiance Scatter ────────────────────────────────────────
@@ -184,7 +222,7 @@ def chart_pr_vs_irr(daily: pd.DataFrame, systems, incl, date_range):
         template="plotly_white",
     )
     fig.update_layout(height=460, legend_title="System")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
 
 # ── CHART 4: Data Quality Heatmap ────────────────────────────────────────────
@@ -218,14 +256,14 @@ def chart_data_quality(monthly: pd.DataFrame, systems, incl, date_range):
         template="plotly_white",
     )
     fig.update_layout(height=420)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
 
 # ── MAIN ──────────────────────────────────────────────────────────────────────
 
 def main():
     st.title("☀️ Solar Analytics Dashboard")
-    st.caption("13 PV systems · 10 years · IEC 61724 Performance Ratio · Validation accuracy: 0.003%")
+    st.caption("13 PV systems · 11 years (2013–2023) · IEC 61724 Performance Ratio · Validation accuracy: 0.003%")
 
     with st.spinner("Loading from BigQuery…"):
         daily   = load_daily()
